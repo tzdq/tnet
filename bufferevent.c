@@ -21,7 +21,7 @@ static void bufferevent_cancel_all(struct bufferevent *bev);
 
 static void bufferevent_run_deferred_callbacks_unlocked(struct deferred_cb *_, void *arg)
 {
-    struct bufferevent_private *bufev_private = arg;
+    struct bufferevent_private *bufev_private = (struct bufferevent_private *)arg;
     struct bufferevent *bufev = &bufev_private->bev;
 
     BEV_LOCK(bufev);
@@ -62,7 +62,7 @@ static void bufferevent_run_deferred_callbacks_unlocked(struct deferred_cb *_, v
 
 static void bufferevent_run_deferred_callbacks_locked(struct deferred_cb *_, void *arg)
 {
-    struct bufferevent_private *bufev_private = arg;
+    struct bufferevent_private *bufev_private = (struct bufferevent_private *)arg;
     struct bufferevent *bufev = &bufev_private->bev;
 
     BEV_LOCK(bufev);
@@ -93,7 +93,7 @@ static void bufferevent_run_deferred_callbacks_locked(struct deferred_cb *_, voi
 /* 输入缓冲区的高水位回调函数 */
 static void bufferevent_inbuf_cb(struct evbuffer *buf, const struct evbuffer_cb_info *cbinfo, void *arg)
 {
-    struct bufferevent *bufev = arg;
+    struct bufferevent *bufev = (struct bufferevent *)arg;
     size_t size;
 
     size = evbuffer_get_length(buf);
@@ -348,7 +348,7 @@ struct bufferevent *bufferevent_get_underlying(struct bufferevent *bev)
     if (bev->be_ops->ctrl)
         res = bev->be_ops->ctrl(bev, BEV_CTRL_GET_UNDERLYING, &d);
     BEV_UNLOCK(bev);
-    return (res<0) ? NULL : d.ptr;
+    return (res < 0) ? NULL : (struct bufferevent *)d.ptr;
 }
 
 int bufferevent_add_event(struct event *ev, const struct timeval *tv)

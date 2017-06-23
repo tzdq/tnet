@@ -21,6 +21,7 @@
 #include "event/thread.h"
 #include "event/util.h"
 #include "evmap.h"
+#include "eviomultiplexing.h"
 
 extern const struct eventop selectops;
 extern const struct eventop pollops;
@@ -1025,7 +1026,7 @@ void event_base_dump_events(struct event_base *base, FILE *output)
     struct event *e;
     fprintf(output, "Inserted events:\n");
     TAILQ_FOREACH(e, &base->eventqueue, ev_next) {
-        fprintf(output, "  %p [fd "EV_SOCK_FMT"]%s%s%s%s%s\n",
+        fprintf(output, "  %p [fd = %d]%s%s%s%s%s\n",
                 (void*)e, e->ev_fd,
                 (e->ev_events&EV_READ)?" Read":"",
                 (e->ev_events&EV_WRITE)?" Write":"",
@@ -1039,7 +1040,7 @@ void event_base_dump_events(struct event_base *base, FILE *output)
             continue;
         fprintf(output, "Active events [priority %d]:\n", i);
         TAILQ_FOREACH(e, &base->eventqueue, ev_next) {
-            fprintf(output, "  %p [fd "EV_SOCK_FMT"]%s%s%s%s\n",
+            fprintf(output, "  %p [fd  = %d ]%s%s%s%s\n",
                     (void*)e, e->ev_fd,
                     (e->ev_res&EV_READ)?" Read active":"",
                     (e->ev_res&EV_WRITE)?" Write active":"",
@@ -1302,7 +1303,7 @@ int event_add_nolock(struct event *ev, const struct timeval *tv, int tv_is_absol
 
     EVENT_BASE_ASSERT_LOCKED(base);
 
-    event_debug(("event_add: event: %p (fd "EV_SOCK_FMT"), %s%s%scall %p",
+    event_debug(("event_add: event: %p (fd = %d), %s%s%scall %p",
             ev, ev->ev_fd,
             ev->ev_events & EV_READ ? "EV_READ " : " ",
             ev->ev_events & EV_WRITE ? "EV_WRITE " : " ",
@@ -1441,8 +1442,7 @@ int event_del_nolock(struct event *ev){
     struct event_base *base;
     int res = 0, notify = 0;
 
-    event_debug(("event_del: %p (fd "EV_SOCK_FMT"), callback %p",
-            ev, ev->ev_fd, ev->ev_callback));
+    event_debug(("event_del: %p (fd = %d), callback %p", ev, ev->ev_fd, ev->ev_callback));
 
     /* An event without a base has not been added */
     if (ev->ev_base == NULL)
@@ -1514,7 +1514,7 @@ void event_active(struct event *ev, int res, short ncalls)
 void event_active_nolock(struct event *ev, int res, short ncalls) {
     struct event_base *base;
 
-    event_debug(("event_active: %p (fd "EV_SOCK_FMT"), res %d, callback %p",
+    event_debug(("event_active: %p (fd = %d), res %d, callback %p",
             ev, ev->ev_fd, (int) res, ev->ev_callback));
 
     if (ev->ev_flags & EVLIST_ACTIVE) {
@@ -1673,7 +1673,7 @@ static void event_queue_insert(struct event_base *base, struct event *ev, int qu
         if (queue & EVLIST_ACTIVE)
             return;
 
-        event_errx(1, "%s: %p(fd "EV_SOCK_FMT") already on queue %x", __func__, ev, ev->ev_fd, queue);
+        event_errx(1, "%s: %p(fd = %d) already on queue %x", __func__, ev, ev->ev_fd, queue);
         return;
     }
     //不是内部事件，增加事件数目
@@ -1708,7 +1708,7 @@ static void event_queue_remove(struct event_base *base, struct event *ev, int qu
     EVENT_BASE_ASSERT_LOCKED(base);
 
     if (!(ev->ev_flags & queue)) {
-        event_errx(1, "%s: %p(fd "EV_SOCK_FMT") not on queue %x", __func__, ev, ev->ev_fd, queue);
+        event_errx(1, "%s: %p(fd = %d) not on queue %x", __func__, ev, ev->ev_fd, queue);
         return;
     }
 

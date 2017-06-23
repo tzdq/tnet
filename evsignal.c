@@ -141,11 +141,11 @@ int evsig_set_handler(struct event_base *base, int evsignal, void (*handler)(int
                (new_max - sig->sh_old_max) * sizeof(*sig->sh_old));
 
         sig->sh_old_max = new_max;
-        sig->sh_old = p;
+        sig->sh_old = (struct sigaction **)p;
     }
 
     /* 在动态数组中为evsignal的事件处理函数分配空间 */
-    sig->sh_old[evsignal] = mm_malloc(sizeof * sig->sh_old[evsignal]);
+    sig->sh_old[evsignal] = (struct sigaction *)mm_malloc(sizeof * sig->sh_old[evsignal]);
     if (sig->sh_old[evsignal] == NULL) {
         event_warn("malloc");
         return (-1);
@@ -236,7 +236,7 @@ static int evsig_del(struct event_base *base, int evsignal, short old, short eve
 {
     EVUTIL_ASSERT(evsignal >= 0 && evsignal < NSIG);
 
-    event_debug(("%s: "EV_SOCK_FMT": restoring signal handler", __func__, evsignal));
+    event_debug(("%s: %d: restoring signal handler", __func__, evsignal));
 
     EVSIGBASE_LOCK();
     --evsig_base_n_signals_added;

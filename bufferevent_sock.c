@@ -41,7 +41,7 @@ const struct bufferevent_ops bufferevent_ops_socket = {
 */
 static void bufferevent_readcb(int fd, short event, void *arg)
 {
-    struct bufferevent *bufev = arg;
+    struct bufferevent *bufev = (struct bufferevent *)arg;
     struct bufferevent_private *bufev_p = EVUTIL_UPCAST(bufev, struct bufferevent_private, bev);
     struct evbuffer *input;
     int res = 0;
@@ -115,7 +115,7 @@ done:
 */
 static void bufferevent_writecb(int fd, short event, void *arg)
 {
-    struct bufferevent *bufev = arg;
+    struct bufferevent *bufev = (struct bufferevent *)arg;
     struct bufferevent_private *bufev_p = EVUTIL_UPCAST(bufev, struct bufferevent_private, bev);
     int res = 0;
     short what = BEV_EVENT_WRITING;
@@ -211,7 +211,7 @@ done:
 
 static void bufferevent_socket_outbuf_cb(struct evbuffer *buf, const struct evbuffer_cb_info *cbinfo, void *arg)
 {
-    struct bufferevent *bufev = arg;
+    struct bufferevent *bufev = (struct bufferevent *)arg;
     struct bufferevent_private *bufev_p = EVUTIL_UPCAST(bufev, struct bufferevent_private, bev);
 
     if (cbinfo->n_added && (bufev->enabled & EV_WRITE)
@@ -227,7 +227,7 @@ struct bufferevent *bufferevent_socket_new(struct event_base *base, int fd, int 
     struct bufferevent_private *bufev_p;
     struct bufferevent *bufev;
 
-    if ((bufev_p = mm_calloc(1, sizeof(struct bufferevent_private)))== NULL)
+    if ((bufev_p = (struct bufferevent_private *)mm_calloc(1, sizeof(struct bufferevent_private)))== NULL)
         return NULL;
 
     if (bufferevent_init_common(bufev_p, base, &bufferevent_ops_socket, options) < 0) {

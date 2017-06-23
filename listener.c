@@ -89,7 +89,7 @@ struct evconnlistener *evconnlistener_new(struct event_base *base, evconnlistene
             return NULL;
     }
 
-    lev = mm_calloc(1, sizeof(struct evconnlistener_event));
+    lev = (struct evconnlistener_event *)mm_calloc(1, sizeof(struct evconnlistener_event));
     if (!lev)
         return NULL;
 
@@ -276,7 +276,7 @@ void evconnlistener_set_error_cb(struct evconnlistener *lev, evconnlistener_erro
 
 static void listener_read_cb(int fd, short what, void *p)
 {
-    struct evconnlistener *lev = p;
+    struct evconnlistener *lev = (struct evconnlistener *)p;
     int err;
     evconnlistener_cb cb;
     evconnlistener_errorcb errorcb;

@@ -107,7 +107,7 @@ struct debug_lock{
 };
 
 static void* debug_lock_alloc(unsigned locktype){
-    struct debug_lock *result = mm_malloc(sizeof(struct debug_lock));
+    struct debug_lock *result = (struct debug_lock *)mm_malloc(sizeof(struct debug_lock));
     if(!result)return NULL;
     if(original_lock_fns_.alloc){//用户设置过自己的线程锁函数 ，用用户定制的线程锁函数分配一个线程锁
         if(!(result->lock = original_lock_fns_.alloc(locktype|EVTHREAD_LOCKTYPE_RECURSIVE))){
@@ -126,7 +126,7 @@ static void* debug_lock_alloc(unsigned locktype){
 }
 
 static void debug_lock_free(void *lock_, unsigned locktype) {
-    struct debug_lock *lock = lock_;
+    struct debug_lock *lock = (struct debug_lock *)lock_;
     EVUTIL_ASSERT(lock->count == 0);
     EVUTIL_ASSERT(locktype == lock->locktype);
     if (original_lock_fns_.free) {
@@ -151,7 +151,7 @@ static void evthread_debug_lock_mark_locked(unsigned mode, struct debug_lock *lo
 }
 
 static int debug_lock_lock(unsigned mode ,void *lock_){
-    struct debug_lock *lock = lock_;
+    struct debug_lock *lock = (struct debug_lock *)lock_;
     int res = 0;
     if(lock->locktype & EVTHREAD_LOCKTYPE_READWRITE)
         EVUTIL_ASSERT(mode & (EVTHREAD_READ |EVTHREAD_WRITE));
@@ -184,7 +184,7 @@ static void evthread_debug_lock_mark_unlocked(unsigned mode, struct debug_lock *
 
 static int debug_lock_unlock(unsigned mode, void *lock_)
 {
-    struct debug_lock *lock = lock_;
+    struct debug_lock *lock = (struct debug_lock *)lock_;
     int res = 0;
     evthread_debug_lock_mark_unlocked(mode, lock);
     if (original_lock_fns_.unlock)
@@ -195,7 +195,7 @@ static int debug_lock_unlock(unsigned mode, void *lock_)
 static int debug_cond_wait(void *cond_, void *lock_, const struct timeval *tv)
 {
     int r;
-    struct debug_lock *lock = lock_;
+    struct debug_lock *lock = (struct debug_lock *)lock_;
     EVUTIL_ASSERT(lock);
     EVLOCK_ASSERT_LOCKED(lock_);
     evthread_debug_lock_mark_unlocked(0, lock);
@@ -230,7 +230,7 @@ void evthread_enable_lock_debugging(void){
 
 int evthread_is_debug_lock_held_(void *lock_)
 {
-    struct debug_lock *lock = lock_;
+    struct debug_lock *lock = (struct debug_lock *)lock_;
     if (! lock->count)
         return 0;
     if (evthread_id_fn_) {
@@ -262,7 +262,7 @@ void* evthread_setup_global_lock_(void *lock_, unsigned locktype, int enable_loc
             original_lock_fns_.free(lock_,locktype);
             return debug_lock_alloc(locktype);
         }
-        lock = mm_malloc(sizeof(struct debug_lock));
+        lock = (struct debug_lock *)mm_malloc(sizeof(struct debug_lock));
         if(!lock){
             original_lock_fns_.free(lock_,locktype);
             return NULL;
@@ -280,7 +280,7 @@ void* evthread_setup_global_lock_(void *lock_, unsigned locktype, int enable_loc
     }
     else{
         /* Case 4: 用真正的锁填充调试锁*/
-        struct debug_lock *lock = (lock_ ? lock_ : debug_lock_alloc(locktype));
+        struct debug_lock *lock = (struct debug_lock *)(lock_ ? lock_ : debug_lock_alloc(locktype));
         EVUTIL_ASSERT(enable_locks && evthread_lock_debugging_enabled_);
         EVUTIL_ASSERT(lock->locktype == locktype);
         if(!lock->lock){

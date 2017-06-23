@@ -2,6 +2,8 @@
 #define TNET_EVSIGNAL_INTERNAL_H
 
 #include <signal.h>
+#include "event/event_struct.h"
+#include "event/event.h"
 
 //信号结构体
 struct evsig_info {

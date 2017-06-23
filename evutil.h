@@ -56,8 +56,6 @@
 	} while (0)
 #define EVUTIL_FAILURE_CHECK(cond) EVUTIL_UNLIKELY(cond)
 
-#define EV_SOCK_FMT "%d"
-
 /* 如果我们知道给定的指针指向一个结构中的一个字段，则返回一个指向结构本身的指针。 用于实现我们的半拷贝 */
 #define EVUTIL_UPCAST(ptr, type, field) ((type *)(((char*)(ptr)) - offsetof(type, field)))
 

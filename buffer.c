@@ -1,10 +1,10 @@
-#include "sys/types.h"
-#include "sys/time.h"
-#include "sys/socket.h"
-#include "sys/uio.h"
-#include "sys/ioctl.h"
-#include "sys/mman.h"
-#include "sys/sendfile.h"
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <sys/uio.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/sendfile.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +17,7 @@
 #include "event/bufferevent.h"
 #include "event/thread.h"
 #include "evlog.h"
+#include "sys/queue.h"
 #include "evmemory.h"
 #include "evutil.h"
 #include "evthread.h"
@@ -74,7 +75,7 @@ static struct evbuffer_chain *evbuffer_chain_new(size_t size)
         to_alloc = size;
     }
 
-    if ((chain = mm_malloc(to_alloc)) == NULL)
+    if ((chain = (struct evbuffer_chain *)mm_malloc(to_alloc)) == NULL)
         return (NULL);
 
     //只需初始化最前面的结构体部分即可
@@ -308,7 +309,7 @@ static void evbuffer_run_callbacks(struct evbuffer *buffer, int running_deferred
         buffer->n_del_for_cb = 0;
     }
     //遍历回调函数队列，调用回调函数
-    for (cbent = TAILQ_FIRST(&buffer->callbacks); cbent != TAILQ_END(&buffer->callbacks); cbent = next) {
+    for (cbent = TAILQ_FIRST(&buffer->callbacks); cbent != NULL; cbent = next) {
         next = TAILQ_NEXT(cbent, next);
 
         if ((cbent->flags & mask) != masked_val)
@@ -344,7 +345,7 @@ void evbuffer_invoke_callbacks(struct evbuffer *buffer)
 static void evbuffer_deferred_callback(struct deferred_cb *cb, void *arg)
 {
     struct bufferevent *parent = NULL;
-    struct evbuffer *buffer = arg;
+    struct evbuffer *buffer = (struct evbuffer *)arg;
 
     EVBUFFER_LOCK(buffer);
     parent = buffer->parent;
@@ -598,7 +599,7 @@ done:
 int evbuffer_add(struct evbuffer *buf, const void *data_in, size_t datlen)
 {
     struct evbuffer_chain *chain, *tmp;
-    const unsigned char *data = data_in;
+    const unsigned char *data = (const unsigned char *)data_in;
     size_t remain, to_alloc;
     int result = -1;
 
@@ -977,7 +978,7 @@ done:
 ssize_t evbuffer_copyout(struct evbuffer *buf, void *data_out, size_t datlen)
 {
     struct evbuffer_chain *chain;
-    char *data = data_out;
+    char *data = (char *)data_out;
     size_t nread;
     ssize_t result = 0;
 
@@ -1341,16 +1342,17 @@ struct evbuffer_ptr evbuffer_search_range(struct evbuffer *buffer, const char *w
     //设置正确的范围，初始化pos
     if (start) {
         memcpy(&pos, start, sizeof(pos));
-        chain = pos.internal.chain;
+        chain = (struct evbuffer_chain *)(pos.internal.chain);
     }
     else {//如果没有设置start，从第一个节点开始查找
         pos.pos = 0;
-        chain = pos.internal.chain = buffer->first;
+        pos.internal.chain = (void*)buffer->first;
+        chain =  buffer->first;
         pos.internal.pos_in_chain = 0;
     }
 
     if (end)
-        last_chain = end->internal.chain;
+        last_chain = (struct evbuffer_chain *)end->internal.chain;
 
     //非法长度
     if (!len || len > EV_SSIZE_MAX)
@@ -1360,8 +1362,8 @@ struct evbuffer_ptr evbuffer_search_range(struct evbuffer *buffer, const char *w
 
     /* 本函数里面并不考虑到what的数据量比较链表的总数据量还多。但在evbuffer_ptr_memcmp函数中会考虑这个问题。此时该函数直接返回-1。本函数之所以没有考虑这样情况，可能是因为，在[start, end]之间有多少数据是不值得统计的，时间复杂度是O(n)。不是一个简单的buffer->total_len就能获取到的 */
     while (chain) {
-        const unsigned char *start_at = chain->buffer + chain->misalign + pos.internal.pos_in_chain;
-        p = memchr(start_at, first, chain->off - pos.internal.pos_in_chain);
+        const u_char *start_at = (const u_char *)chain->buffer + chain->misalign + pos.internal.pos_in_chain;
+        p = (const u_char*)memchr(start_at, first, chain->off - pos.internal.pos_in_chain);
         if (p) {//first在start_at为首地址的缓冲区中存在
             pos.pos += p - start_at;
             pos.internal.pos_in_chain += p - start_at;//设置偏移
@@ -1374,7 +1376,8 @@ struct evbuffer_ptr evbuffer_search_range(struct evbuffer *buffer, const char *w
             ++pos.pos;//未找到，增加偏移量，从一个字节开始比较
             ++pos.internal.pos_in_chain;
             if (pos.internal.pos_in_chain == chain->off) {
-                chain = pos.internal.chain = chain->next;
+                pos.internal.chain = (void*)chain->next;
+                chain  = chain->next;
                 pos.internal.pos_in_chain = 0;
             }
         }
@@ -1382,7 +1385,8 @@ struct evbuffer_ptr evbuffer_search_range(struct evbuffer *buffer, const char *w
             if (chain == last_chain)
                 goto not_found;
             pos.pos += chain->off - pos.internal.pos_in_chain;
-            chain = pos.internal.chain = chain->next;
+            pos.internal.chain = (void*)chain->next;
+            chain = chain->next;
             pos.internal.pos_in_chain = 0;
         }
     }
@@ -1408,7 +1412,7 @@ static int evbuffer_ptr_memcmp(const struct evbuffer *buf, const struct evbuffer
     if (pos->pos < 0 || EV_SIZE_MAX - len < (size_t)pos->pos || pos->pos + len > buf->total_len)
         return -1;
 
-    chain = pos->internal.chain;
+    chain = (struct evbuffer_chain *)pos->internal.chain;
     position = pos->internal.pos_in_chain;
     while (len && chain) {//考虑比较的数据在不同的节点中
         size_t n_comparable;//该evbuffer_chain中可以比较的字符数
@@ -1432,7 +1436,7 @@ static int evbuffer_ptr_memcmp(const struct evbuffer *buf, const struct evbuffer
 static inline int evbuffer_strspn(struct evbuffer_ptr *ptr, const char *chrset)
 {
     int count = 0;//用于统计有多少个字符是在指定字符串中出现
-    struct evbuffer_chain *chain = ptr->internal.chain;
+    struct evbuffer_chain *chain = (struct evbuffer_chain *)ptr->internal.chain;
     size_t i = ptr->internal.pos_in_chain;
 
     if (!chain)
@@ -1471,12 +1475,12 @@ static inline int evbuffer_strspn(struct evbuffer_ptr *ptr, const char *chrset)
  */
 static inline ssize_t evbuffer_strchr(struct evbuffer_ptr *it, const char chr)
 {
-    struct evbuffer_chain *chain = it->internal.chain;
+    struct evbuffer_chain *chain = (struct evbuffer_chain *)it->internal.chain;
     size_t i = it->internal.pos_in_chain;
     while (chain != NULL)
     {
-        char *buffer = (char *)chain->buffer + chain->misalign;//缓冲区的首地址
-        char *cp = memchr(buffer+i, chr, chain->off-i);
+        char *buffer = (char *)(chain->buffer + chain->misalign);//缓冲区的首地址
+        char *cp = (char*)memchr(buffer+i, chr, chain->off-i);
         if (cp) {//查找到了chr
             it->internal.chain = chain;
             it->internal.pos_in_chain = cp - buffer;
@@ -1494,7 +1498,7 @@ static inline ssize_t evbuffer_strchr(struct evbuffer_ptr *it, const char chr)
 //获取对应位置的字符
 static inline char evbuffer_getchr(struct evbuffer_ptr *it)
 {
-    struct evbuffer_chain *chain = it->internal.chain;
+    struct evbuffer_chain *chain = (struct evbuffer_chain *)it->internal.chain;
     size_t off = it->internal.pos_in_chain;
 
     return chain->buffer[chain->misalign + off];
@@ -1518,7 +1522,7 @@ char *evbuffer_readln(struct evbuffer *buffer, size_t *n_read_out, enum evbuffer
         goto done;
     n_to_copy = it.pos;
 
-    if ((line = mm_malloc(n_to_copy+1)) == NULL) {
+    if ((line = (char*)mm_malloc(n_to_copy+1)) == NULL) {
         event_warn("%s: out of memory", __func__);
         goto done;
     }
@@ -1544,8 +1548,8 @@ static inline char *find_eol_char(char *s, size_t len)
     s_end = s+len;
     while (s < s_end) {
         size_t chunk = (s + CHUNK_SZ < s_end) ? CHUNK_SZ : (s_end - s);
-        cr = memchr(s, '\r', chunk);//s中查找‘\r’是否存在
-        lf = memchr(s, '\n', chunk);//s中查找‘\n’是否存在
+        cr = (char*)memchr(s, '\r', chunk);//s中查找‘\r’是否存在
+        lf = (char*)memchr(s, '\n', chunk);//s中查找‘\n’是否存在
         if (cr) {
             if (lf && lf < cr)//‘\r’和'\n'都存在，并且'\n'先出现
                 return lf;
@@ -1563,7 +1567,7 @@ static inline char *find_eol_char(char *s, size_t len)
 
 static ssize_t evbuffer_find_eol_char(struct evbuffer_ptr *it)
 {
-    struct evbuffer_chain *chain = it->internal.chain;
+    struct evbuffer_chain *chain = (struct evbuffer_chain *)it->internal.chain;
     size_t i = it->internal.pos_in_chain;
     while (chain != NULL) {
         char *buffer = (char *)chain->buffer + chain->misalign;
@@ -1674,7 +1678,7 @@ int evbuffer_ptr_set(struct evbuffer *buf, struct evbuffer_ptr *pos, size_t posi
                 EVBUFFER_UNLOCK(buf);
                 return -1;
             }
-            chain = pos->internal.chain;//从当前evbuffer_chain算起
+            chain = (struct evbuffer_chain *)pos->internal.chain;//从当前evbuffer_chain算起
             pos->pos += position;//加上相对偏移量
             position = pos->internal.pos_in_chain;
             break;
@@ -1747,7 +1751,7 @@ int evbuffer_remove_cb_entry(struct evbuffer *buffer, struct evbuffer_cb_entry *
 struct evbuffer_cb_entry *evbuffer_add_cb(struct evbuffer *buffer, evbuffer_cb_func cb, void *cbarg)
 {
     struct evbuffer_cb_entry *e;
-    if (! (e = mm_calloc(1, sizeof(struct evbuffer_cb_entry))))
+    if (! (e = (struct evbuffer_cb_entry *)mm_calloc(1, sizeof(struct evbuffer_cb_entry))))
         return NULL;
     EVBUFFER_LOCK(buffer);
     e->cb.cb_func = cb;
@@ -2015,7 +2019,7 @@ int evbuffer_add_file(struct evbuffer *outbuf, int fd, off_t offset, off_t lengt
 		}
 
 		chain->flags |= EVBUFFER_MMAP | EVBUFFER_IMMUTABLE;
-		chain->buffer = mapped;
+		chain->buffer = (u_char*)mapped;
 		chain->buffer_len = length + offset;
 		chain->off = length + offset;
 
