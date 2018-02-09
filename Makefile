@@ -22,9 +22,9 @@ TARGETNAME = libtnet.a
 
 # 编译选项参数
 CC = gcc
-CFLAGS = -Wall -O3 -g -fPIC
+CFLAGS = -Wall -O3 -g -fPIC -fpermissive
 CXX = g++
-CXXFLAGS = -Wall -O3 -g -fPIC
+CXXFLAGS = -Wall -O3 -g -fPIC -fpermissive
 RM = rm -rvf
 CP = cp -fr
 AR = ar cru
