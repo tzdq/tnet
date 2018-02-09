@@ -11,17 +11,20 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
-#include "event/event.h"
-#include "event/event_struct.h"
-#include "event/util.h"
+#include "event2/event.h"
+#include "event2/event_struct.h"
+#include "event2/util.h"
 #include "event_internal.h"
 #include "evlog.h"
 #include "evutil.h"
 #include "evthread.h"
-#include "event/thread.h"
-#include "event/util.h"
+#include "event2/thread.h"
 #include "evmap.h"
+#include "evsignal.h"
+//C++编译时需要包含这个头文件
+#ifdef __cplusplus
 #include "eviomultiplexing.h"
+#endif
 
 extern const struct eventop selectops;
 extern const struct eventop pollops;
@@ -1863,4 +1866,18 @@ int evthread_make_base_notifiable(struct event_base *base)
     r = evthread_make_base_notifiable_nolock_(base);
     EVBASE_RELEASE_LOCK(base, th_base_lock);
     return r;
+}
+static void event_free_evsig_globals(void)
+{
+    evsig_free_globals();
+}
+
+static void event_free_globals(void)
+{
+    event_free_evsig_globals();
+}
+
+void libevent_global_shutdown(void)
+{
+    event_free_globals();
 }

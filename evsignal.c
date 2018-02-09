@@ -9,10 +9,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "event/event.h"
-#include "event/event_struct.h"
+#include "event2/event.h"
+#include "event2/event_struct.h"
 #include "event_internal.h"
-#include "event/util.h"
+#include "event2/util.h"
 #include "evsignal.h"
 #include "evlog.h"
 #include "evmap.h"
@@ -309,3 +309,16 @@ int evsig_global_setup_locks(const int enable_locks)
     return 0;
 }
 
+static void evsig_free_globals_locks(void)
+{
+    if (evsig_base_lock != NULL) {
+        EVTHREAD_FREE_LOCK(evsig_base_lock, 0);
+        evsig_base_lock = NULL;
+    }
+    return;
+}
+
+void evsig_free_globals(void)
+{
+    evsig_free_globals_locks();
+}
