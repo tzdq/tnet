@@ -276,4 +276,7 @@ void event_set_fatal_callback(event_fatal_cb cb);
 void event_set_mem_functions(void *(*malloc_fn)(size_t sz),
                              void *(*realloc_fn)(void *ptr, size_t sz),
                              void (*free_fn)(void *ptr));
+
+//释放分配的全局变量
+void libevent_global_shutdown(void);
 #endif //TNET_EVENT_H
