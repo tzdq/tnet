@@ -3,10 +3,10 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "event/listener.h"
-#include "event/util.h"
-#include "event/event.h"
-#include "event/event_struct.h"
+#include "event2/listener.h"
+#include "event2/util.h"
+#include "event2/event.h"
+#include "event2/event_struct.h"
 #include "evmemory.h"
 #include "evutil.h"
 #include "evlog.h"

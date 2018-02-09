@@ -1,7 +1,7 @@
 #include "eviomultiplexing.h"
 #include <unistd.h>
 #include <signal.h>
-#include "event/thread.h"
+#include "event2/thread.h"
 
 #define check_selectop(sop) do { (void) sop; } while (0)
 

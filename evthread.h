@@ -1,7 +1,7 @@
 #ifndef TNET_EVTHREAD_INTERNAL_H
 #define TNET_EVTHREAD_INTERNAL_H
 
-#include "event/thread.h"
+#include "event2/thread.h"
 #include "evutil.h"
 
 struct event_base;

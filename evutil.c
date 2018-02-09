@@ -13,7 +13,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <ifaddrs.h>
-#include "event/util.h"
+#include "event2/util.h"
 #include "evutil.h"
 #include "evlog.h"
 #include "evmemory.h"

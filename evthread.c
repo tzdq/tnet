@@ -1,4 +1,4 @@
-#include "event/thread.h"
+#include "event2/thread.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

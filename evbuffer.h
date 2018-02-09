@@ -1,11 +1,11 @@
 #ifndef TNET_EVBUFFER_INTERNAL_H
 #define TNET_EVBUFFER_INTERNAL_H
 
-#include "event/util.h"
+#include "event2/util.h"
 #include "evutil.h"
 #include "defer.h"
 #include "sys/queue.h"
-#include "event/buffer.h"
+#include "event2/buffer.h"
 
 /* 回调从不延迟的标志*/
 #define EVBUFFER_CB_NODEFER  2
@@ -64,7 +64,7 @@ struct evbuffer {
 
 #define EVBUFFER_CHAIN_MAX ((size_t)EV_SSIZE_MAX)
 
-/** evbuffer中的一个项目 */
+/** evbuffer中的一个块 */
 struct evbuffer_chain {
     struct evbuffer_chain *next;/** 指向链中的下一个缓冲区 */
     size_t buffer_len; /** buffer的大小   */

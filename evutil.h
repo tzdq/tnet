@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include "evlog.h"
-#include "event/util.h"
+#include "event2/util.h"
 
 #if EAGAIN == EWOULDBLOCK
 #define EVUTIL_ERR_IS_EAGAIN(e) ((e) == EAGAIN)

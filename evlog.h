@@ -8,7 +8,7 @@
 #ifndef TNET_LOG_INTERNAL_H
 #define TNET_LOG_INTERNAL_H
 
-#include "event/util.h"
+#include "event2/util.h"
 
 /*
  * 主要针对GNU
@@ -34,7 +34,8 @@ void event_debugx_(const char *fmt, ...) EV_CHECK_FMT(1,2);
 
 void event_logv(int severity,const char* errstr,const char *fmt,va_list ap)EV_CHECK_FMT(3,0);
 
-#define event_debug(x) event_debugx_ x
+//#define event_debug(x) event_debugx_ x
+#define event_debug(x) 0
 #undef EV_CHECK_FMT
 
 #endif //TNET_LOG_INTERNAL_H

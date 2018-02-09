@@ -5,9 +5,9 @@
 #ifndef TNET_MINHEAP_INTERNAL_H
 #define TNET_MINHEAP_INTERNAL_H
 
-#include "event/event.h"
-#include "event/event_struct.h"
-#include "event/util.h"
+#include "event2/event.h"
+#include "event2/event_struct.h"
+#include "event2/util.h"
 #include "evutil.h"
 #include "evmemory.h"
 

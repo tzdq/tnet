@@ -13,7 +13,7 @@
 #include "evmemory.h"
 #include "evsignal.h"
 #include "event_internal.h"
-#include "event/event.h"
+#include "event2/event.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

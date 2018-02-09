@@ -3,7 +3,7 @@
 
 #include "sys/queue.h"
 #include <time.h>
-#include "event/event_struct.h"
+#include "event2/event_struct.h"
 #include "evsignal.h"
 #include "minheap.h"
 #include "evmemory.h"

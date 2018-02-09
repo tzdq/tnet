@@ -12,10 +12,10 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <limits.h>
-#include "event/event.h"
-#include "event/buffer.h"
-#include "event/bufferevent.h"
-#include "event/thread.h"
+#include "event2/event.h"
+#include "event2/buffer.h"
+#include "event2/bufferevent.h"
+#include "event2/thread.h"
 #include "evlog.h"
 #include "sys/queue.h"
 #include "evmemory.h"

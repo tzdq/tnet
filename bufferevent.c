@@ -6,10 +6,10 @@
 #include <string.h>
 #include <stdarg.h>
 #include <errno.h>
-#include "event/util.h"
-#include "event/buffer.h"
-#include "event/bufferevent.h"
-#include "event/event.h"
+#include "event2/util.h"
+#include "event2/buffer.h"
+#include "event2/bufferevent.h"
+#include "event2/event.h"
 #include "evlog.h"
 #include "evmemory.h"
 #include "bufferevent_internal.h"

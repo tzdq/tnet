@@ -12,22 +12,13 @@ SUBDIRS = $(filter-out $(SUBDIRS_EXCLUDE) $(HIGH_PRIORITY_DIR), $(SUBDIRS_ALL))
 SRC_MODULES =$(HIGH_PRIORITY) $(SUBDIRS)
 CLEAN_MODULES = $(addprefix _clean_,$(SRC_MODULES))
 
-# 获取当前项目下所有可能存在的源文件
-SRC_CPP_FILES =  $(foreach dir, $(SRC_MODULES), $(wildcard $(dir)/*.cpp))
-SRC_CPP_FILES += $(wildcard *.cpp)
-
-SRC_CC_FILES =  $(foreach dir, $(SRC_MODULES), $(wildcard $(dir)/*.cc))
-SRC_CC_FILES += $(wildcard *.cc)
-
-SRC_C_FILES =  $(foreach dir, $(SRC_MODULES), $(wildcard $(dir)/*.c))
-SRC_C_FILES += $(wildcard *.c)
-
 # 源文件和OBJ文件
-SRC_FILES = $(SRC_CPP_FILES) $(SRC_CC_FILES) $(SRC_C_FILES)
+SRC_FILES =  $(foreach dir, $(SRC_MODULES), $(wildcard $(dir)/*.c))
+SRC_FILES += $(wildcard *.c)
 OBJ_FILES = $(SRC_FILES:.c=.o)
 
 # 目标定义
-LIBNAME = libtnet.a
+TARGETNAME = libtnet.a
 
 # 编译选项参数
 CC = gcc
@@ -46,10 +37,10 @@ INCLUDE = -I .
 INCLUDE += $(foreach dir,$(SRC_MODULES),-I $(dir))
 
 # 编译需要依赖的库
-LIBS += -lpthread 
+LIBS += -lpthread
 
 # 需要拷贝到系统include的头文件目录
-USER_NEED_COPY_HEADER_FILES = event/
+USER_NEED_COPY_HEADER_FILES = event2/
 
 # 系统库和include目录
 SYS_LIB_PATH = /usr/local/lib
@@ -57,19 +48,19 @@ SYS_INCLUDE_PATH = /usr/local/include
 
 # 用户头文件在include和lib中的全路径
 USER_INCLUDE_PATH = $(SYS_INCLUDE_PATH)/$(USER_NEED_COPY_HEADER_FILES)
-USER_LIB_PATH = $(SYS_LIB_PATH)/$(LIBNAME)
+USER_LIB_PATH = $(SYS_LIB_PATH)/$(TARGETNAME)
 
 # 终极目标
 .PHONY:all install uninstall clean cleanall 
 
 
-all:PRE_MAKE $(LIBNAME)
+all:PRE_MAKE $(TARGETNAME)
 	$(CP) $(USER_NEED_COPY_HEADER_FILES) $(SYS_INCLUDE_PATH)
-	$(CP) $(LIBNAME) $(SYS_LIB_PATH)	
+	$(CP) $(TARGETNAME) $(SYS_LIB_PATH)	
 
 install:
 	$(CP) $(USER_NEED_COPY_HEADER_FILES) $(SYS_INCLUDE_PATH)
-	$(CP) $(LIBNAME) $(SYS_LIB_PATH)
+	$(CP) $(TARGETNAME) $(SYS_LIB_PATH)
 	
 uninstall:
 	$(RM) $(USER_INCLUDE_PATH) $(USER_LIB_PATH)
@@ -79,7 +70,7 @@ clean:PRE_CLEAN
 
 cleanall:PRE_CLEAN
 	$(RM) $(OBJ_FILES)
-	$(RM) $(LIBNAME)
+	$(RM) $(TARGETNAME)
 
 PRE_CLEAN:
 	@echo "Removing linked and complied files ...."
@@ -96,6 +87,6 @@ else
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $^ $(LIBS)
 endif
 
-$(LIBNAME):$(OBJ_FILES)
+$(TARGETNAME):$(OBJ_FILES)
 	$(AR) $@ $^
-	$(RANLIB) $(LIBNAME)
+	$(RANLIB) $(TARGETNAME)

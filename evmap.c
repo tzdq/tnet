@@ -11,7 +11,7 @@
 #include "event_internal.h"
 #include "evmap.h"
 #include "evmemory.h"
-#include "event/event_struct.h"
+#include "event2/event_struct.h"
 
 //evmap_io列表的入口：给定fd上所有想要read或者write的事件，以及事件的数目
 struct evmap_io {

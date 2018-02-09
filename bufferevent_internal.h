@@ -1,11 +1,11 @@
 #ifndef TNET_BUFFEREVENT_INTERNAL_H
 #define TNET_BUFFEREVENT_INTERNAL_H
 
-#include "event/util.h"
+#include "event2/util.h"
 #include "defer.h"
 #include "evthread.h"
-#include "event/thread.h"
-#include "event/bufferevent.h"
+#include "event2/thread.h"
+#include "event2/bufferevent.h"
 
 /** bufferevent公共部分 */
 struct bufferevent_private {

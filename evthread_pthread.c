@@ -1,5 +1,5 @@
 #include <pthread.h>
-#include "event/thread.h"
+#include "event2/thread.h"
 #include <stdlib.h>
 #include "evmemory.h"
 #include "evthread.h"
